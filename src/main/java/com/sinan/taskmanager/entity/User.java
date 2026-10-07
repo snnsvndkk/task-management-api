@@ -1,6 +1,7 @@
 package com.sinan.taskmanager.entity;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,9 +44,11 @@ public class User {
 		this.email = email;
 	}
 
+	// PostgreSQL keeps microseconds; truncating here means the value returned on
+	// create/update is exactly the one that later reads return.
 	@PrePersist
 	void onCreate() {
-		this.createdAt = Instant.now();
+		this.createdAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
 	}
 
 	public Long getId() {
