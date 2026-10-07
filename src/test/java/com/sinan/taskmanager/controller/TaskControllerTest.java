@@ -87,6 +87,32 @@ class TaskControllerTest {
 	}
 
 	@Test
+	void createTaskWithInvalidDueDateNamesTheField() throws Exception {
+		mockMvc.perform(post("/api/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "Write report", "dueDate": "2026-13-45", "userId": 1}
+						"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.message").value(
+						"Invalid value '2026-13-45' for field 'dueDate'. Expected a date in the format YYYY-MM-DD"));
+
+		verifyNoInteractions(taskService);
+	}
+
+	@Test
+	void createTaskWithNonNumericUserIdNamesTheField() throws Exception {
+		mockMvc.perform(post("/api/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "Write report", "userId": "abc"}
+						"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("Invalid value 'abc' for field 'userId'"));
+	}
+
+	@Test
 	void createTaskWithMalformedJsonReturnsBadRequest() throws Exception {
 		mockMvc.perform(post("/api/tasks")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -143,7 +169,9 @@ class TaskControllerTest {
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.status").value(404))
 				.andExpect(jsonPath("$.error").value("Not Found"))
-				.andExpect(jsonPath("$.path").value("/api/unknown"));
+				.andExpect(jsonPath("$.message").value("No endpoint found for GET /api/unknown"))
+				.andExpect(jsonPath("$.path").value("/api/unknown"))
+				.andExpect(jsonPath("$.fieldErrors").isEmpty());
 	}
 
 	private static Task savedTask() {

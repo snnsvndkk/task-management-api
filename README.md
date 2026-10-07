@@ -270,8 +270,21 @@ curl -X POST http://localhost:8080/api/tasks \
 
 | Status | When |
 |---|---|
-| `400 Bad Request` | Validation failure, malformed JSON, unknown enum value, or a non-numeric id |
+| `400 Bad Request` | Validation failure, malformed JSON, unknown enum value, invalid date, or a non-numeric id |
 | `404 Not Found` | The user or task does not exist, or the path is unknown |
 | `405 Method Not Allowed` | The HTTP method is not supported on that path |
 | `409 Conflict` | The email is already used by another user |
 | `500 Internal Server Error` | Unexpected failure; details are logged, not returned |
+
+Values of the wrong type name the offending field and say what was expected:
+
+```json
+{
+  "timestamp": "2026-10-07T09:22:30.118054Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Invalid value '2026-13-45' for field 'dueDate'. Expected a date in the format YYYY-MM-DD",
+  "path": "/api/tasks",
+  "fieldErrors": {}
+}
+```

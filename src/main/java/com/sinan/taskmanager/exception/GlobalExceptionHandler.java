@@ -1,6 +1,7 @@
 package com.sinan.taskmanager.exception;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
@@ -22,7 +23,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.sinan.taskmanager.dto.ApiError;
 
@@ -77,12 +80,28 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
 			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 		String message = "Malformed JSON request body";
-		if (ex.getCause() instanceof InvalidFormatException invalid && invalid.getTargetType().isEnum()) {
-			String field = invalid.getPath().isEmpty() ? "value"
-					: invalid.getPath().getLast().getPropertyName();
+		// Well-formed JSON whose value cannot be converted to the field's type,
+		// e.g. an unknown enum constant or an impossible date.
+		if (ex.getCause() instanceof InvalidFormatException invalid && !invalid.getPath().isEmpty()
+				&& invalid.getPath().getLast().getPropertyName() != null) {
+			String field = invalid.getPath().getLast().getPropertyName();
 			message = invalidValue(invalid.getValue(), "field", field, invalid.getTargetType());
 		}
 		return build(status, message, Map.of(), headers, request);
+	}
+
+	// Unknown paths fall through to the static resource handler, whose own
+	// message talks about static resources rather than API endpoints.
+	@Override
+	protected ResponseEntity<Object> handleNoResourceFoundException(NoResourceFoundException ex,
+			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+		return build(status, endpointNotFound(request), Map.of(), headers, request);
+	}
+
+	@Override
+	protected ResponseEntity<Object> handleNoHandlerFoundException(NoHandlerFoundException ex,
+			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+		return build(status, endpointNotFound(request), Map.of(), headers, request);
 	}
 
 	@Override
@@ -121,11 +140,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(body, headers, status);
 	}
 
+	private static String endpointNotFound(WebRequest request) {
+		if (request instanceof ServletWebRequest servlet) {
+			return "No endpoint found for " + servlet.getRequest().getMethod() + " "
+					+ servlet.getRequest().getRequestURI();
+		}
+		return "No endpoint found";
+	}
+
 	private static String invalidValue(Object value, String kind, String name, Class<?> type) {
 		String message = "Invalid value '" + value + "' for " + kind + " '" + name + "'";
 		if (type != null && type.isEnum()) {
 			message += ". Allowed values: " + String.join(", ",
 					Arrays.stream(type.getEnumConstants()).map(Object::toString).toList());
+		}
+		else if (type == LocalDate.class) {
+			message += ". Expected a date in the format YYYY-MM-DD";
 		}
 		return message;
 	}
