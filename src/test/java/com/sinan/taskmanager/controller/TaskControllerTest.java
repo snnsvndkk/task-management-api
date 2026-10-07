@@ -137,6 +137,15 @@ class TaskControllerTest {
 				.andExpect(jsonPath("$.path").value("/api/tasks/10"));
 	}
 
+	@Test
+	void unknownPathReturnsNotFoundInTheSameErrorShape() throws Exception {
+		mockMvc.perform(get("/api/unknown"))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.status").value(404))
+				.andExpect(jsonPath("$.error").value("Not Found"))
+				.andExpect(jsonPath("$.path").value("/api/unknown"));
+	}
+
 	private static Task savedTask() {
 		User owner = new User("Ada Lovelace", "ada@example.com");
 		owner.setId(1L);
