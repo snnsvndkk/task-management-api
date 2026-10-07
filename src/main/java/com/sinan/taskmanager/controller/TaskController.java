@@ -3,6 +3,8 @@ package com.sinan.taskmanager.controller;
 import java.net.URI;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,7 +37,7 @@ public class TaskController {
 	}
 
 	@PostMapping
-	public ResponseEntity<TaskResponse> createTask(@RequestBody TaskRequest request) {
+	public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest request) {
 		Task task = taskService.createTask(request.userId(), request.toEntity());
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
 				.path("/{id}")
@@ -59,7 +61,7 @@ public class TaskController {
 	}
 
 	@PutMapping("/{id}")
-	public TaskResponse updateTask(@PathVariable Long id, @RequestBody TaskRequest request) {
+	public TaskResponse updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequest request) {
 		return TaskResponse.from(taskService.updateTask(id, request.userId(), request.toEntity()));
 	}
 

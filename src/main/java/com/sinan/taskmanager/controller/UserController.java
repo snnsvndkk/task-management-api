@@ -3,6 +3,8 @@ package com.sinan.taskmanager.controller;
 import java.net.URI;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,7 +34,7 @@ public class UserController {
 	}
 
 	@PostMapping
-	public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request) {
+	public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request) {
 		User user = userService.createUser(request.toEntity());
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
 				.path("/{id}")
@@ -52,7 +54,7 @@ public class UserController {
 	}
 
 	@PutMapping("/{id}")
-	public UserResponse updateUser(@PathVariable Long id, @RequestBody UserRequest request) {
+	public UserResponse updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
 		return UserResponse.from(userService.updateUser(id, request.toEntity()));
 	}
 
