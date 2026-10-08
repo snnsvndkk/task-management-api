@@ -288,3 +288,7 @@ Values of the wrong type name the offending field and say what was expected:
   "fieldErrors": {}
 }
 ```
+
+## License
+
+Released under the [MIT License](LICENSE).
